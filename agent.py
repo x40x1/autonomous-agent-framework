@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class Agent:
     """The autonomous AI agent."""
 
-    def __init__(self, llm: BaseLLM, tools: List[BaseTool], memory: SimpleMemory, max_iterations: int = 10):
+    def __init__(self, llm: BaseLLM, tools: List[BaseTool], memory: SimpleMemory, max_iterations: int = 10, admin: bool = False):
         """
         Initializes the Agent.
 
@@ -24,11 +24,18 @@ class Agent:
             tools: A list of available tools.
             memory: The agent's memory module.
             max_iterations: Maximum number of thought-action cycles before stopping.
+            admin: Flag indicating if the agent has admin privileges.
         """
         self.llm = llm
         self.tools = {tool.name: tool for tool in tools} # Store tools in a dict for easy lookup
         self.memory = memory
         self.max_iterations = max_iterations
+        self.admin = admin
+
+        if self.admin:
+            logger.info("Agent running with admin privileges.")
+        else:
+            logger.info("Agent running without admin privileges.")
 
         # Load the prompt template
         try:

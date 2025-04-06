@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sys
+import ctypes
 
 from utils.config import load_config
 from utils.logging_setup import setup_logging
@@ -41,6 +42,18 @@ def main():
         logger.critical(f"Failed to load configuration: {e}", exc_info=True)
         sys.exit(1)
 
+    is_admin = False # Default to not admin
+    # If admin privileges are required by config, check and elevate if necessary.
+    if config.get('admin_privileges', False):
+        is_admin = ctypes.windll.shell32.IsUserAnAdmin()
+        if not is_admin:
+            logger.info("Admin privileges required. Relaunching with elevated rights...")
+            params = " ".join(sys.argv)
+            ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, params, None, 1)
+            sys.exit(0)
+        else:
+            logger.info("Process running with admin privileges.")
+
     log_level = logging.DEBUG if args.verbose else logging.INFO
     setup_logging(level=log_level) # Reconfigure logging with desired level
 
@@ -69,10 +82,9 @@ def main():
         # Agent
         max_iterations = config.get('max_iterations', 15)
         agent = Agent(
-            llm=llm_client,
-            tools=available_tools,
             memory=memory,
-            max_iterations=max_iterations
+            max_iterations=max_iterations,
+            admin=is_admin
         )
 
     except ValueError as e:

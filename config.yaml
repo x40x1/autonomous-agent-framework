@@ -4,6 +4,7 @@
 llm_provider: ollama # Choose 'openai', 'ollama', or 'gemini'
 max_iterations: 100 # Max steps per agent run
 enable_dangerous_tools: false # !!! SET TO true TO ENABLE EXTREMELY DANGEROUS TOOLS !!!
+admin_privileges: false  # Set to true to allow executing commands with admin privileges
 
 # --- LLM Provider Configurations ---
 openai:
