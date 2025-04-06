@@ -151,19 +151,6 @@ class GeminiLLM(BaseLLM):
                 logger.debug(f"--- End of Response ---")
                 return generated_text
 
-            except types.ResourceExhausted as e:  # Specific exception for quota/rate limits
-                logger.warning(
-                    f"Gemini Quota/Rate Limit Error: {e}. Retrying in {delay}s... (Attempt {attempt + 1}/{retries})")
-                time.sleep(delay)
-                delay *= 2  # Exponential backoff
-            except types.GoogleAPICallError as e:  # General API call errors
-                logger.error(f"Gemini API Call Error: {e}. Check API key and network. Status: {e.code}")
-                if hasattr(e, 'code') and e.code in [500, 503, 429] and attempt < retries - 1:  # Added 429 for retry
-                    logger.warning(f"Retrying after server/rate limit error ({e.code})...")
-                    time.sleep(delay)
-                    delay *= 2
-                else:
-                    raise  # Re-raise non-retriable or final attempt errors
             except Exception as e:
                 logger.error(f"An unexpected error occurred during Gemini API call: {e}", exc_info=True)
                 raise  # Re-raise unexpected errors immediately

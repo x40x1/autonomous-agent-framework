@@ -87,7 +87,7 @@ class TaskSpawnerTool(BaseTool):
         # Shared queue for results (Simplistic - real implementation needs better IPC)
         self.result_queue = multiprocessing.Queue()
 
-    def execute(self, **kwargs) -> str:
+    def execute(self, *args, **kwargs) -> str:
         action = kwargs.get('action')
         params = kwargs.get('params', {})
         if not action:

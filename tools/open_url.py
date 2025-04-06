@@ -34,24 +34,24 @@ class OpenURLTool(BaseTool):
         if not url:
             return "Error: No URL provided."
             
-        # Basic URL validation
-        if not (url.startswith('http://') or url.startswith('https://')):
-            url = 'https://' + url
-            logger.info(f"URL modified to include schema: {url}")
-            
-        logger.info(f"Opening URL: {url}")
+        # Remove extra whitespace and quotes from the URL
+        cleaned_url = url.strip().strip('\'"')
+        # Prepend https:// if not already present
+        if not (cleaned_url.startswith("http://") or cleaned_url.startswith("https://")):
+            cleaned_url = f"https://{cleaned_url}"
+        logger.info(f"Opening URL: {cleaned_url}")
         
         try:
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
-            response = requests.get(url, headers=headers, timeout=15)
+            response = requests.get(cleaned_url, headers=headers, timeout=15)
             response.raise_for_status()  # Raise exception for bad status codes
             
             # Check content type to avoid parsing images, PDFs, etc.
             content_type = response.headers.get('content-type', '').lower()
             if 'text/html' not in content_type and 'text/plain' not in content_type:
-                logger.warning(f"Skipping non-HTML/text content type '{content_type}' for URL: {url}")
+                logger.warning(f"Skipping non-HTML/text content type '{content_type}' for URL: {cleaned_url}")
                 return f"Error: Content type '{content_type}' is not scrapable text/html."
                 
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -72,24 +72,24 @@ class OpenURLTool(BaseTool):
             text = text.strip()
             
             if len(text) > MAX_CONTENT_LENGTH:
-                logger.info(f"Content truncated from {len(text)} to {MAX_CONTENT_LENGTH} characters for {url}")
+                logger.info(f"Content truncated from {len(text)} to {MAX_CONTENT_LENGTH} characters for {cleaned_url}")
                 text = text[:MAX_CONTENT_LENGTH] + "... (content truncated)"
                 
             if not text:
-                return f"Successfully accessed URL {url}, but no significant text content found."
+                return f"Successfully accessed URL {cleaned_url}, but no significant text content found."
                 
-            return f"Content from {url}:\n\n{text}"
+            return f"Content from {cleaned_url}:\n\n{text}"
             
         except requests.exceptions.Timeout:
-            logger.error(f"Timeout error while trying to access {url}")
-            return f"Error: Timeout while trying to access {url}"
+            logger.error(f"Timeout error while trying to access {cleaned_url}")
+            return f"Error: Timeout while trying to access {cleaned_url}"
         except requests.exceptions.RequestException as e:
-            logger.error(f"Error accessing {url}: {e}")
+            logger.error(f"Error accessing {cleaned_url}: {e}")
             status_code = getattr(e.response, 'status_code', None)
             if status_code:
-                return f"Error: Failed to access {url}. Status code: {status_code}"
+                return f"Error: Failed to access {cleaned_url}. Status code: {status_code}"
             else:
-                return f"Error: Could not access {url}. Reason: {e}"
+                return f"Error: Could not access {cleaned_url}. Reason: {e}"
         except Exception as e:
-            logger.error(f"Unexpected error accessing {url}: {e}", exc_info=True)
-            return f"Error: An unexpected error occurred while accessing {url}: {e}"
+            logger.error(f"Unexpected error accessing {cleaned_url}: {e}", exc_info=True)
+            return f"Error: An unexpected error occurred while accessing {cleaned_url}: {e}"

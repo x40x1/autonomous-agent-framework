@@ -12,6 +12,15 @@ logger = logging.getLogger(__name__)
 # Requires chromadb and sentence-transformers
 # pip install chromadb sentence-transformers
 
+# --- NEW GLOBAL PATCH ---
+# Ensure that transformers.modeling_utils provides init_empty_weights
+try:
+    from transformers.modeling_utils import init_empty_weights
+except ImportError:
+    import transformers.modeling_utils
+    transformers.modeling_utils.init_empty_weights = lambda *args, **kwargs: None
+# --- END PATCH ---
+
 class VectorMemoryTool(BaseTool):
     name = "vector_memory"
     description = (
@@ -36,9 +45,9 @@ class VectorMemoryTool(BaseTool):
             self.client = chromadb.PersistentClient(path=self.persist_directory)
             logger.info(f"VectorMemoryTool initialized. DB Path: '{self.persist_directory}'. Default Collection: '{self.default_collection_name}'.")
 
-            # Load embedding model
+            # The previous local patch is removed in favor of the global patch above.
             logger.info(f"Loading embedding model: {self.embedding_model_name}...")
-            self.embedding_model = SentenceTransformer(self.embedding_model_name)
+            self.embedding_model = SentenceTransformer(self.embedding_model_name, device="cpu")
             logger.info("Embedding model loaded successfully.")
 
             # Ensure default collection exists

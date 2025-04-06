@@ -80,12 +80,11 @@ def get_available_tools(config: Dict) -> List[BaseTool]:
             logger.warning(f"Tool '{tool_name}' already initialized. Skipping duplicate.")
             return
 
-        # Check the tool's dangerous flag from its class definition
         is_dangerous_in_code = getattr(tool_class, 'is_dangerous', False)
-
+        
         # Only instantiate dangerous tools if globally enabled
-        if is_dangerous_in_code and not enable_dangerous:
-            logger.info(f"Skipping dangerous tool '{tool_name}' because its class defines 'is_dangerous=True' and dangerous tools are globally disabled.")
+        if is_dangerous_in_code and not config.get('enable_dangerous_tools', False):
+            logger.info(f"Skipping dangerous tool '{tool_name}' because dangerous tools are globally disabled.")
             return
 
         try:
@@ -102,6 +101,8 @@ def get_available_tools(config: Dict) -> List[BaseTool]:
                 )
             elif tool_name == "file_system":
                 tool_instance = tool_class(base_directory=specific_config.get('base_directory', 'workspace'))
+            elif tool_name == "open_url":
+                tool_instance = tool_class()
             elif tool_name == "database":
                 tool_instance = tool_class(
                     connection_strings=specific_config.get('connection_strings', {"default": "sqlite:///workspace/agent.db"}),
@@ -109,15 +110,7 @@ def get_available_tools(config: Dict) -> List[BaseTool]:
                 )
             elif tool_name == "browser_automation":
                 tool_instance = tool_class(timeout=specific_config.get('timeout', 30000))
-            elif tool_name == "read_screen":
-                tool_instance = tool_class(tesseract_cmd=specific_config.get('tesseract_cmd'))
-            elif tool_name == "command_line":
-                tool_instance = tool_class(timeout=specific_config.get('timeout', 60))
-            elif tool_name == "python_exec":
-                tool_instance = tool_class()
-            elif tool_name == "code_modifier":
-                tool_instance = tool_class(project_root=specific_config.get('project_root'))
-            elif tool_name == "task_spawner":
+            elif tool_name == "ask_human":
                 tool_instance = tool_class()
             elif tool_name == "vector_memory":
                 tool_instance = tool_class(
@@ -125,12 +118,21 @@ def get_available_tools(config: Dict) -> List[BaseTool]:
                     collection_name=specific_config.get('collection_name', 'agent_knowledge'),
                     embedding_model_name=specific_config.get('embedding_model_name', 'all-MiniLM-L6-v2')
                 )
+            elif tool_name == "screen_reader":
+                tool_instance = tool_class(tesseract_cmd=specific_config.get('tesseract_cmd'))
+            elif tool_name == "command_line":
+                tool_instance = tool_class(enabled=True, timeout=specific_config.get('timeout', 60))
+            elif tool_name == "python_exec":
+                tool_instance = tool_class(enabled=True)
+            elif tool_name == "code_modifier":
+                if not isinstance(specific_config, dict):
+                    specific_config = {}
+                tool_instance = tool_class(enabled=True, project_root=specific_config.get('project_root'))
+            elif tool_name == "task_spawner":
+                tool_instance = tool_class()
             else:
-                if tool_name in ["open_url", "ask_human"]:
-                    tool_instance = tool_class()
-                else:
-                    logger.warning(f"No specific instantiation logic for built-in tool '{tool_name}'. Using default __init__().")
-                    tool_instance = tool_class()
+                logger.warning(f"No specific instantiation logic for built-in tool '{tool_name}'. Using default __init__().")
+                tool_instance = tool_class()
 
             if tool_instance:
                 danger_status = "DANGEROUS" if is_dangerous_in_code else "Standard"

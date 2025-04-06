@@ -1,5 +1,6 @@
 import os
 import logging
+import ast  # New import
 from pathlib import Path
 from typing import Union
 
@@ -75,8 +76,22 @@ class FileSystemTool(BaseTool):
             A string describing the result or an error message.
         """
         try:
+            # New: Check if operation looks like a dict string, and if so, parse it.
+            if operation.strip().startswith("{") and operation.strip().endswith("}"):
+                try:
+                    parsed = ast.literal_eval(operation)
+                    if isinstance(parsed, dict):
+                        operation = parsed.get("operation", "").lower()
+                        path = parsed.get("path", path)
+                        content = parsed.get("content", content)
+                    else:
+                        return "Error: Invalid operation format."
+                except Exception as e:
+                    return f"Error parsing operation input: {e}"
+            else:
+                operation = operation.lower()
+
             target_path = self._resolve_path(path)
-            operation = operation.lower()
             logger.info(f"Executing file system operation '{operation}' on path '{target_path}' (relative: '{path}')")
 
 

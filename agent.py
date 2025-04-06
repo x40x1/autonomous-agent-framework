@@ -69,30 +69,32 @@ class Agent:
         if action_name not in self.tools:
             logger.error(f"Action '{action_name}' requested but tool not found. Available tools: {list(self.tools.keys())}")
             return f"Error: Tool '{action_name}' not found. Available tools are: {', '.join(self.tools.keys())}"
-
         tool = self.tools[action_name]
         try:
             # If action_input is a JSON-like string, attempt to parse it into a dictionary.
             if isinstance(action_input, str) and action_input.strip().startswith("{"):
                 try:
-                    action_input = json.loads(action_input)
-                except Exception as e:
-                    logger.error(f"Failed to parse JSON from action_input: {e}", exc_info=True)
-                    # fallback to original string if parsing fails
-
-            # Modified to unpack arguments if action_input is a dict
-            if isinstance(action_input, dict):
-                observation = tool.execute(**action_input)
-            else:
-                observation = tool.execute(action_input)
+                    action_input_dict = json.loads(action_input)
+                except json.decoder.JSONDecodeError as e:
+                    logger.warning(f"Initial JSON parsing failed for input: {action_input}. Attempting fix. Error: {e}")
+                    fixed_input = action_input.replace("'", "\"")
+                    try:
+                        action_input_dict = json.loads(fixed_input)
+                    except json.decoder.JSONDecodeError as e2:
+                        logger.error(f"Failed to parse action input even after fix: {fixed_input}. Error: {e2}", exc_info=True)
+                        action_input_dict = action_input  # Fallback to original string
+                else:
+                    action_input = action_input_dict
+            # Unpack arguments if action_input is a dict; otherwise, pass the raw input.
+            observation = tool.execute(**action_input) if isinstance(action_input, dict) else tool.execute(action_input)
             logger.info(f"Executing tool '{action_name}' with input: '{str(action_input)[:100]}{'...' if len(str(action_input))>100 else ''}'")
             logger.info(f"Tool '{action_name}' executed. Observation: {str(observation)[:100]}{'...' if len(str(observation))>100 else ''}")
-            return str(observation)  # Ensure observation is a string
+            return str(observation)
         except TypeError as te:
-             logger.error(f"TypeError executing tool '{action_name}' with input '{action_input}'. Does the tool expect different arguments? Error: {te}", exc_info=True)
-             return f"Error: Tool '{action_name}' failed due to incorrect input arguments. Check tool description and input format. Error: {te}"
+            logger.error(f"TypeError executing tool '{action_name}' with input '{action_input}'. Does the tool expect different arguments? Error: {te}", exc_info=True)
+            return f"Error: Tool '{action_name}' failed due to incorrect input arguments. Check tool description and input format. Error: {te}"
         except Exception as e:
-            logger.error(f"Error executing tool '{action_name}': {e}", exc_info=True)
+            logger.error(f"Error executing tool '{action_name}' with input '{action_input}': {e}", exc_info=True)
             return f"Error: An unexpected error occurred while executing tool '{action_name}': {e}"
 
     def run(self, goal: str) -> str:
