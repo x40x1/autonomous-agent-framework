@@ -89,7 +89,9 @@ class Agent:
                         action_input_dict = json.loads(fixed_input)
                     except json.decoder.JSONDecodeError as e2:
                         logger.error(f"Failed to parse action input even after fix: {fixed_input}. Error: {e2}", exc_info=True)
-                        action_input_dict = action_input  # Fallback to original string
+                        return f"Error: Failed to parse JSON input. Please provide a valid JSON dictionary. Error: {e2}"
+                    else:
+                        action_input = action_input_dict
                 else:
                     action_input = action_input_dict
             # Unpack arguments if action_input is a dict; otherwise, pass the raw input.

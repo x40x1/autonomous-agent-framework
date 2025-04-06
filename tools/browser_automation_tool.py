@@ -6,6 +6,10 @@ import subprocess
 import sys
 from typing import Optional, Dict, List, Union, Any
 
+import asyncio
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 from .base_tool import BaseTool
 
 logger = logging.getLogger(__name__)
@@ -31,6 +35,7 @@ class BrowserAutomationTool(BaseTool):
         self.page = None
         self.playwright = None
         self.is_playwright_available = self._check_playwright_installation()
+        self.last_error = ""  # Added to store error details
         logger.info(f"BrowserAutomationTool initialized (Timeout: {self.timeout}ms). Playwright available: {self.is_playwright_available}")
 
     def _check_playwright_installation(self):
@@ -64,6 +69,7 @@ class BrowserAutomationTool(BaseTool):
         """Starts browser and page if not already running."""
         if not self.is_playwright_available:
             logger.error("Playwright is not properly installed. Cannot start browser.")
+            self.last_error = "Playwright is not installed properly."
             return False
             
         # Now safely import playwright since we know it's available
@@ -71,6 +77,7 @@ class BrowserAutomationTool(BaseTool):
             from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
         except ImportError:
             logger.error("Failed to import playwright even though it was detected earlier")
+            self.last_error = "Playwright import failed."
             return False
             
         if self.page and self.browser and self.playwright:
@@ -97,6 +104,7 @@ class BrowserAutomationTool(BaseTool):
             return True
         except Exception as e:
             logger.error(f"Failed to start browser: {e}", exc_info=True)
+            self.last_error = str(e)
             self._close_browser()  # Clean up any partial resources
             return False
 
@@ -152,7 +160,7 @@ class BrowserAutomationTool(BaseTool):
 
             # For all other actions, ensure browser is running
             if not self._ensure_browser_page():
-                return "Error: Failed to initialize browser."
+                return f"Error: Failed to initialize browser. Details: {self.last_error}"
 
             # Import needed for PlaywrightTimeoutError
             from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
