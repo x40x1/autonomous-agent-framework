@@ -13,6 +13,7 @@ from .command_line import CommandLineTool
 from .python_exec import PythonExecutorTool
 from .open_url import OpenURLTool
 from .database_tool import DatabaseTool
+from .keyboard_control_tool import KeyboardControlTool
 
 # Tier 1 Tools
 from .browser_automation_tool import BrowserAutomationTool
@@ -42,6 +43,7 @@ _TOOL_CLASSES: Dict[str, Type[BaseTool]] = {
     "python_exec": PythonExecutorTool,
     "code_modifier": CodeModifierTool,
     "task_spawner": TaskSpawnerTool,
+    "keyboard_control": KeyboardControlTool,
 }
 
 def get_tool_descriptions(tools: List[BaseTool]) -> str:
