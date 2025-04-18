@@ -1,0 +1,31 @@
+openai>=1.0.0
+PyYAML>=6.0
+requests>=2.28.0
+beautifulsoup4>=4.11.0
+googlesearch-python>=1.2.3 # Or latest version
+python-dotenv>=1.0.0
+google-genai>=0.5.0 # Gemini library
+
+# Tier 1 Dependencies
+playwright>=1.30.0 # For Browser Automation
+google-api-python-client>=2.50.0 # For Gmail, Google Calendar
+google-auth-oauthlib>=0.5.0 # For Google OAuth
+google-auth-httplib2>=0.1.0 # For Google OAuth
+GitPython>=3.1.30 # For plugin management
+
+# Tier 2 Dependencies
+sqlalchemy>=2.0.0 # For database tool
+pandas>=1.5.0 # For data handling
+tabulate>=0.9.0 # For table formatting in database results
+mss>=9.0.1 # For Screen Reading (Screenshots)
+pytesseract>=0.3.10 # For Screen Reading (OCR)
+Pillow>=9.0.0 # For Image processing (Screen Reading dependency)
+
+# Tier 3 Dependencies (Mostly core Python, but structure implies complexity)
+# No *new* specific libraries for code_modifier or task_spawner basics,
+# but task_spawner would need multiprocessing/asyncio if fully implemented.
+
+# Existing Dependencies for reference (may overlap)
+python-docx>=0.8.11
+pypdf2>=3.0.0
+pydub>=0.25.1

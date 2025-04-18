@@ -1,0 +1,100 @@
+# Configuration for the Autonomous AI Agent Framework
+
+# --- Core Settings ---
+llm_provider: ollama # Choose 'openai', 'ollama', or 'gemini'
+max_iterations: 100 # Max steps per agent run
+enable_dangerous_tools: false # !!! SET TO true TO ENABLE EXTREMELY DANGEROUS TOOLS !!!
+admin_privileges: false  # Set to true to allow executing commands with admin privileges
+
+# --- LLM Provider Configurations ---
+openai:
+  # api_key: sk-... # Set via .env (OPENAI_API_KEY) or uncomment and set here (less secure)
+  model: gpt-4o # Or gpt-4-turbo, gpt-3.5-turbo, etc.
+  temperature: 0.7
+  max_tokens: 4000 # Max tokens for the completion/response part
+
+gemini:
+  # api_key: ... # Set via .env (GOOGLE_API_KEY) or uncomment here
+  model: gemini-2.5-pro-preview-03-25
+  temperature: 0.7
+  max_output_tokens: 8192 # Gemini uses max_output_tokens
+  top_p: 1.0
+  top_k: 32
+  # Safety settings (BLOCK_NONE is most permissive, use with caution)
+  # Options: BLOCK_NONE, BLOCK_LOW_AND_ABOVE, BLOCK_MEDIUM_AND_ABOVE, BLOCK_ONLY_HIGH
+  safety_settings:
+    HARM_CATEGORY_HARASSMENT: BLOCK_NONE
+    HARM_CATEGORY_HATE_SPEECH: BLOCK_NONE
+    HARM_CATEGORY_SEXUALLY_EXPLICIT: BLOCK_NONE
+    HARM_CATEGORY_DANGEROUS_CONTENT: BLOCK_NONE # DANGEROUS_CONTENT must be BLOCK_NONE if dangerous tools are enabled
+
+ollama:
+  host: http://localhost:11434 # Default Ollama API host
+  model: llama3.2:latest # Or mistral, etc. Make sure you pulled the model (ollama pull llama3.2:latest)
+  temperature: 0.7
+  # Other Ollama options (num_ctx, top_k, top_p, etc.) can be added here
+  options:
+    num_ctx: 4096 # Example context window size
+
+# --- Tool Configurations (Optional Overrides and Settings) ---
+tools:
+  # Standard Tools
+  web_search:
+    num_results: 10
+    num_results_to_scrape: 3
+    lang: "en"
+    # region: "us" # Example region
+    safe: "on" # 'on' or null/commented out for off
+    sleep_interval: 0 # Seconds between requests if num_results > 100
+
+  file_system:
+    base_directory: "workspace" # Relative path from agent execution dir
+
+  open_url: {} # No specific config needed
+
+  database:
+    # Default connection uses SQLite in the workspace
+    connection_strings:
+      default: "sqlite:///workspace/agent.db"
+      # Example PostgreSQL connection (requires psycopg2):
+      # postgres_db: "postgresql+psycopg2://user:password@host:port/dbname"
+      # Example MySQL connection (requires mysql-connector-python):
+      # mysql_db: "mysql+mysqlconnector://user:password@host:port/dbname"
+    max_results: 100 # Max rows to return from SELECT queries
+
+  browser_automation:
+    timeout: 30000 # Playwright timeout in milliseconds (30 seconds)
+
+  ask_human: {} # No specific config needed
+
+  screen_reader:
+    # --- SETUP REQUIRED ---
+    # Install Tesseract OCR engine: https://github.com/tesseract-ocr/tesseract#installing-tesseract
+    # Ensure 'tesseract' command is in PATH or specify the full path below.
+    # tesseract_cmd: "/usr/bin/tesseract" # Example path for Linux, adjust for your OS
+
+  # Dangerous Tools (Identified by code, loaded only if enable_dangerous_tools is true)
+  command_line:
+    timeout: 60 # Seconds before command execution times out
+
+  python_exec:
+    # No specific config currently
+    pass
+
+  code_modifier:
+    # project_root: null # Defaults to agent's root dir. Override if needed (e.g., "/path/to/agent/src")
+    pass
+
+  task_spawner:
+    # No specific config currently (Highly experimental)
+    pass
+
+# --- Plugin System ---
+plugins:
+  # List of installed plugin directory names to activate.
+  # Plugins should be installed in the 'plugins/' directory.
+  # Example: If you install a plugin 'my_custom_tool' into 'plugins/my_custom_tool',
+  # add 'my_custom_tool' to this list to enable it.
+  enabled:
+    # - example_plugin
+    # - another_plugin
